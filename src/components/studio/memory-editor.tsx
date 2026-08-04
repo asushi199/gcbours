@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import type { EditorMemoryPayload, EditorPhoto } from "@/features/memories/get-editor-memory";
 import { memoryTemplates, MemoryLayoutRenderer } from "@/features/templates/registry";
 import { cn } from "@/lib/utils";
+import { buildPublishSlug } from "@/lib/utils/slug";
 
 type MemoryEditorProps = {
   initial: EditorMemoryPayload;
@@ -337,7 +338,10 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
             <button
               type="button"
               disabled={publishBusy}
-              onClick={() => setPublishOpen(true)}
+              onClick={() => {
+                setSlug(buildPublishSlug(eventDate, title));
+                setPublishOpen(true);
+              }}
               className={cn(buttonVariants())}
             >
               发布
@@ -354,14 +358,31 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
             {placeName ? ` · ${placeName}` : ""}
           </p>
           <label className="mt-3 block text-xs text-muted-ours" htmlFor="publish-slug">
-            链接 slug（可改）
+            链接 slug（仅英文、数字、连字符）
           </label>
           <input
             id="publish-slug"
             value={slug}
-            onChange={(event) => setSlug(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+            onChange={(event) =>
+              setSlug(
+                event.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9-]/g, "-")
+                  .replace(/-{2,}/g, "-"),
+              )
+            }
             className="mt-1 w-full max-w-md rounded-lg border border-line bg-background px-3 py-2 text-sm"
           />
+          <p className="mt-1 text-[11px] text-muted-ours">
+            中文标题会默认成日期 + memory，可改成更有意义的英文，例如{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => setSlug(buildPublishSlug(eventDate, "fuzhou-trip"))}
+            >
+              {buildPublishSlug(eventDate, "fuzhou-trip")}
+            </button>
+          </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
