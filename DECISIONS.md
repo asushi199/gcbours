@@ -1,0 +1,85 @@
+# Architecture Decisions
+
+## Decision 001
+
+Date: 2026-08-04
+Status: Accepted
+Context: Supabase 免费版对象存储容量过小，无法长期存放情侣原图；Cloudflare R2 需要绑卡，上次无法通过。用户个人 Gmail 已订阅 Google One，约有 5TB Drive 容量。
+Decision: 采用混合存储——原图 / HEIC / 音频写入个人 Google Drive；缩略图与 AI 分析用小图写入 Supabase Storage 私有桶；元数据与 Auth 仍使用 Supabase。Drive 访问不经 Studio OAuth，而通过自建 Google Apps Script Web App 网关（共享密钥鉴权）。
+Reason: 充分利用已有 5TB 容量且零额外存储费；缩略图体积可控，适合留在 Supabase；避免 R2 绑卡；个人场景用 GAS 可免去 Google Cloud OAuth 客户端与 refresh token 维护。
+Consequences:
+- `photos` 表使用 `drive_file_id`（及可选 `drive_folder_id`）替代原图 `storage_path`。
+- 网站环境变量使用 `GAS_WEB_APP_URL` / `GAS_SHARED_SECRET` / `GAS_ROOT_FOLDER_ID`。
+- 全屏原图必须经 `/api/signed-image`（或等价）代理，经 GAS `getFile` 拉取；禁止公开分享链接。
+- 时间线仅使用 Supabase 缩略图 signed URL（≤1h）。
+- Phase 3 经 GAS `upload` 写入原图；需注意 GAS 执行时长与体积限制。
+- Studio 设置页只展示连通状态，不再提供「连接 Google Drive」OAuth 按钮。
+
+## Decision 002
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 1 需要可预览的照片与版式，但不能使用未授权网络图片，也不能接入真实存储。
+Decision: 使用本地 CSS 渐变作为照片占位（`EventPhoto.gradient`），并通过统一 `MemoryLayoutRenderer` 渲染预设模板；动效使用 Framer Motion `FadeIn`，在 `prefers-reduced-motion` 时退化为静态渲染。
+Reason: 满足 SPEC「本地占位图 / 无 Supabase / 无 AI」约束，同时能演示杂志感版式与手机布局。
+Consequences:
+- Phase 2/3 接入真实缩略图 URL 时，用图片组件替换 `PhotoPlaceholder` 的渐变实现即可，布局接口保持不变。
+- 模板评分 `scoreTemplate` 已落地为确定性规则，供后续 AI 推荐加分使用。
+
+## Decision 003
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 2 需要落地 Auth、Schema 与 Drive 接入，但本地可能尚未填入真实密钥。
+Decision: Supabase 未配置时允许浏览 Studio UI（横幅提示）；已配置时 middleware 强制管理员登录。Drive 使用 GAS 网关，密钥仅存环境变量与 Script Properties，不写入数据库。`letters` 表增加 `owner_id` 以便 RLS。
+Reason: 兼顾可演示性与生产安全；避免把长期密钥存进可被 RLS 误配读出的表。
+Consequences:
+- 部署前必须设置 Supabase 与（上传前）GAS 环境变量。
+- Phase 3 上传依赖 `GAS_WEB_APP_URL`、`GAS_SHARED_SECRET`、`GAS_ROOT_FOLDER_ID`。
+- Next.js 16 提示 middleware→proxy 迁移；Phase 2 仍使用官方 `@supabase/ssr` middleware 模式，后续再评估。
+
+## Decision 004
+
+Date: 2026-08-04
+Status: Accepted
+Context: 用户希望不要通过 Studio 做 Google OAuth，改为直接调用 Google Apps Script 操作 Drive。
+Decision: 移除 Studio Drive OAuth（`/api/drive/auth`、`/api/drive/callback`、googleapis 依赖）。改为 `gas/OursDriveGateway.gs` Web App + `src/lib/google-drive/gas-client.ts`，用共享密钥调用 `ping` / `ensureFolders` / `upload` / `getFile`。
+Reason: 个人 Gmail + Google One 场景下，GAS「以我身份运行」一次授权即可；运维更轻。
+Consequences:
+- 环境变量改为 `GAS_*`；旧的 `GOOGLE_CLIENT_*` / `GOOGLE_REFRESH_TOKEN` 废弃。
+- GAS 有执行时间与 payload 体积限制，超大原图若失败需后续加分片。
+- Web App 若设为「任何人可访问」，必须始终校验共享密钥。
+
+## Decision 005
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 3 需要真实上传链路。
+Decision: 单文件经 `/api/uploads` 服务端处理——解析 EXIF、GAS `upload` 写原图、`sharp`/`heic-convert` 生成 JPEG 缩略图写入 `memory-thumbnails`，再插入 `photos`；`/api/uploads/group` 按 SPEC §12 规则建 draft 事件。
+Reason: 与已选 GAS 网关一致；缩略图留在 Supabase 控制体积。
+Consequences:
+- 上传需管理员登录 + migration + GAS 配置。
+- 无 EXIF 日期时标记 `needsDateConfirm`，不得静默用上传日。
+- 超大文件可能触及 GAS/函数限制，后续可再做分片。
+
+## Decision 006
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 4 需要持久化用户备注，并支持草稿合并拆分。
+Decision: 新增 `memory_events.user_note`；编辑器经 PATCH 自动保存；合并把源事件照片并入目标后删除源事件；拆分把勾选照片移入新 draft。
+Reason: 备注需与 AI 输入分离；合并/拆分是上传后整理的核心操作。
+Consequences:
+- 部署前需执行 `20260804010000_memory_user_note.sql`。
+- 发布按钮仍禁用至 Phase 6。
+
+## Decision 007
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 5 需要可切换的日记生成能力，且无 API Key 时系统仍可用。
+Decision: 统一 `AIProvider.analyzeMemory`；默认 Mock；有 Key 时用 OpenAI-compatible Chat Completions（JSON + 一次 schema 修复）。生成结果写入 `diary_versions`（source=ai）并更新 draft 字段，不自动发布。分析图仅用缩略图再压缩，不送原图。
+Reason: 符合 SPEC 的事实约束与可替换 Provider；保护隐私与稳定性。
+Consequences:
+- 编辑器可展示 `questionsToConfirm` / `inferredFacts` / 版本恢复。
+- 真实多模态依赖模型是否支持 image_url；Mock 仅用文本与元数据。
