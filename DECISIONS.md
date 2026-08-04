@@ -106,3 +106,14 @@ Reason: 贴合私人档案气质，改动可控，避免视觉回归。
 Consequences:
 - 回忆页照片可全屏左右浏览原图。
 - `prefers-reduced-motion` 时退化为静态。
+
+## Decision 010
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 8 需要可重复验证与可部署路径，但生产密钥仍在用户侧。
+Decision: Vitest 继续覆盖核心纯逻辑；Playwright 冒烟测门禁与解锁页；GitHub Actions 跑 lint/typecheck/test/build + e2e；部署/备份/隐私写成 `docs/*`，由用户在 Vercel/Supabase 完成真实连接。
+Reason: 自动化能拦回归；真实密钥与云资源不能写进仓库。
+Consequences:
+- `npm run validate` / `npm run test:e2e` 成为发布前标准步骤。
+- 首次上线仍需人工完成 `docs/deploy.md` 与隐私勾选。

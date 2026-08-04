@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OURS
 
-## Getting Started
+私人情侣时光档案馆 — Next.js + Supabase + Google Drive (GAS)。
 
-First, run the development server:
+## 本地开发
 
 ```bash
+cp .env.example .env.local
+# 填入 Supabase / GAS / SESSION_SIGNING_SECRET 等
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 http://localhost:3000/unlock（对方入口）或 http://localhost:3000/studio（管理员）。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+完整环境说明见 [`docs/phase-2-setup.md`](docs/phase-2-setup.md)。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 脚本
 
-## Learn More
+| 命令 | 作用 |
+| --- | --- |
+| `npm run dev` | 本地开发 |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript |
+| `npm run test` | Vitest 单测 |
+| `npm run test:e2e` | Playwright 冒烟 |
+| `npm run build` | 生产构建 |
+| `npm run validate` | lint + typecheck + test + build |
+| `npm run seed` | 可选：写入 relationship_settings |
 
-To learn more about Next.js, take a look at the following resources:
+## 文档
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [`docs/deploy.md`](docs/deploy.md) — Vercel / 生产 Supabase 部署
+- [`docs/backup.md`](docs/backup.md) — 备份与恢复
+- [`docs/privacy-checklist.md`](docs/privacy-checklist.md) — 隐私检查清单
+- [`docs/superpowers/specs/2026-08-04-phase-6-publish-unlock-design.md`](docs/superpowers/specs/2026-08-04-phase-6-publish-unlock-design.md) — Phase 6 设计
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 仓库
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+https://github.com/asushi199/gcbours

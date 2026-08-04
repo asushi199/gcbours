@@ -1,33 +1,31 @@
 # Current Phase
 
-Phase 7 — 视觉完善（已落地）
+Phase 8 — 测试与部署（已落地骨架；生产部署需你在 Vercel/Supabase 点一次）
 
 ## Todo
 
-- [ ] （可选）背景音乐仍延后
-- [ ] 下一阶段：Phase 8 测试与部署（需用户确认）
-
-## In Progress
-
-- [ ] （无）
+- [ ] 按 `docs/deploy.md` 配置 Vercel 生产环境变量并首次部署
+- [ ] 按 `docs/privacy-checklist.md` 勾一遍
+- [ ] 微调体验（用户后续提）
 
 ## Completed
 
-### Phase 7
-- [x] 克制纸质感动效：FadeIn / PhotoReveal / PageTransition + reduced motion
-- [x] 空 / 加载 / 错误状态组件，接入故事与时间线
-- [x] 全屏灯箱：加载/失败重试、左右切换、键盘与滑动
-- [x] 字体：正文 Manrope + Noto Sans SC；标题 Cormorant
-- [x] 手机间距与导航触控优化
+### Phase 8
+- [x] 单测补强（publish/unlock 集成向断言）
+- [x] Playwright 冒烟（unlock / 门禁 / login）
+- [x] GitHub Actions CI（validate + e2e）
+- [x] `docs/deploy.md` / `docs/backup.md` / `docs/privacy-checklist.md`
+- [x] README 与 `npm run validate` / `test:e2e`
 
-### Phase 6
-- [x] 发布 / 解锁 / 已发布前台 / 原图代理 / 章节编辑
+### Phase 7 / 6
+- [x] 视觉完善、发布解锁、章节编辑等
 
 ## Validation
 
-- [x] typecheck / tests（30）/ lint / production build
+- [x] `npm run validate`
+- [x] `npm run test:e2e`
 
 ## Notes
 
 - 仓库：https://github.com/asushi199/gcbours
-- 设计：纸质档案气质，不做夸张电影转场
+- 背景音乐仍延后
