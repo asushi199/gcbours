@@ -3,7 +3,7 @@ import Link from "next/link";
 const studioLinks = [
   { href: "/studio", label: "概览" },
   { href: "/studio/upload", label: "上传" },
-  { href: "/studio/drafts", label: "草稿" },
+  { href: "/studio/drafts", label: "回忆" },
   { href: "/studio/templates", label: "模板" },
   { href: "/studio/settings", label: "设置" },
 ] as const;
