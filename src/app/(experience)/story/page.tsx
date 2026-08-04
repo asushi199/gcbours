@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { FadeIn } from "@/components/motion/fade-in";
-import { mockChapters } from "@/config/mock-data";
+import { getStoryChapters } from "@/features/memories/published";
 
-export default function StoryPage() {
+export default async function StoryPage() {
+  const chapters = await getStoryChapters();
+
   return (
     <section className="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
       <FadeIn>
@@ -13,29 +15,38 @@ export default function StoryPage() {
         </p>
       </FadeIn>
 
-      <ol className="mt-12 space-y-8">
-        {mockChapters.map((chapter, index) => (
-          <FadeIn key={chapter.id} delay={0.05 * index}>
-            <li className="group grid gap-4 border-t border-line pt-6 sm:grid-cols-[140px_1fr] sm:items-center">
-              <div
-                className="aspect-[4/3] rounded-xl sm:aspect-square"
-                style={{ backgroundImage: chapter.gradient }}
-                aria-hidden
-              />
-              <div>
-                <p className="text-xs tracking-[0.25em] text-gold">{chapter.number}</p>
-                <h2 className="mt-1 font-serif text-2xl text-ink md:text-3xl">{chapter.title}</h2>
-                <p className="mt-2 text-sm leading-7 text-muted-ours">{chapter.oneLine}</p>
-                <p className="mt-3 text-xs text-muted-ours">
-                  {chapter.memoryCount > 0
-                    ? `${chapter.memoryCount} 篇回忆 · ${chapter.dateRange}`
-                    : `尚未收录 · ${chapter.dateRange}`}
-                </p>
-              </div>
-            </li>
-          </FadeIn>
-        ))}
-      </ol>
+      {chapters.length === 0 ? (
+        <p className="mt-12 text-sm text-muted-ours">还没有已发布的回忆。去 Studio 发布第一篇吧。</p>
+      ) : (
+        <ol className="mt-12 space-y-8">
+          {chapters.map((chapter, index) => (
+            <FadeIn key={chapter.id} delay={0.05 * index}>
+              <li className="group grid gap-4 border-t border-line pt-6 sm:grid-cols-[140px_1fr] sm:items-center">
+                <div
+                  className="aspect-[4/3] overflow-hidden rounded-xl bg-cover bg-center sm:aspect-square"
+                  style={
+                    chapter.coverUrl
+                      ? { backgroundImage: `url(${chapter.coverUrl})` }
+                      : { backgroundImage: chapter.coverGradient }
+                  }
+                  aria-hidden
+                />
+                <div>
+                  <p className="text-xs tracking-[0.25em] text-gold">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <h2 className="mt-1 font-serif text-2xl text-ink md:text-3xl">{chapter.title}</h2>
+                  <p className="mt-2 text-sm leading-7 text-muted-ours">{chapter.oneLine}</p>
+                  <p className="mt-3 text-xs text-muted-ours">
+                    {chapter.count} 篇回忆
+                    {chapter.dateRange ? ` · ${chapter.dateRange}` : ""}
+                  </p>
+                </div>
+              </li>
+            </FadeIn>
+          ))}
+        </ol>
+      )}
 
       <FadeIn delay={0.2} className="mt-12">
         <Link

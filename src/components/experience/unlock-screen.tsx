@@ -1,28 +1,52 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
 import { buttonVariants } from "@/components/ui/button";
-import { mockRelationship } from "@/config/mock-data";
 import { cn } from "@/lib/utils";
 
 export function UnlockScreen() {
   const router = useRouter();
   const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [partnerName, setPartnerName] = useState("她");
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (code.trim().length < 4) {
+    setBusy(true);
+    setError(null);
+    setStatus("idle");
+    try {
+      const response = await fetch("/api/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const json = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+        partnerName?: string;
+      };
+      if (!response.ok || !json.ok) {
+        setStatus("error");
+        setError(json.message ?? "解锁失败");
+        return;
+      }
+      setPartnerName(json.partnerName ?? "她");
+      setStatus("success");
+      window.setTimeout(() => {
+        router.push("/");
+        router.refresh();
+      }, 1000);
+    } catch {
       setStatus("error");
-      return;
+      setError("网络错误，请重试。");
+    } finally {
+      setBusy(false);
     }
-    setStatus("success");
-    window.setTimeout(() => {
-      router.push("/");
-    }, 1200);
   }
 
   return (
@@ -40,15 +64,11 @@ export function UnlockScreen() {
       {status === "success" ? (
         <FadeIn className="relative z-10 space-y-4">
           <p className="text-xs tracking-[0.3em] text-gold uppercase">Identity confirmed</p>
-          <h1 className="font-serif text-3xl md:text-4xl">
-            Welcome back, {mockRelationship.partnerName}
-          </h1>
+          <h1 className="font-serif text-3xl md:text-4xl">Welcome back, {partnerName}</h1>
         </FadeIn>
       ) : (
         <FadeIn className="relative z-10 w-full max-w-md">
-          <p className="text-xs tracking-[0.3em] text-gold uppercase">
-            Personal memory archive
-          </p>
+          <p className="text-xs tracking-[0.3em] text-gold uppercase">Personal memory archive</p>
           <h1 className="mt-6 font-serif text-3xl leading-tight md:text-4xl">
             Identity verification required
           </h1>
@@ -58,20 +78,21 @@ export function UnlockScreen() {
             Enter the date only we remember.
           </p>
 
-          <form onSubmit={handleSubmit} className="mx-auto mt-10 w-full max-w-xs">
+          <form onSubmit={(event) => void handleSubmit(event)} className="mx-auto mt-10 w-full max-w-xs">
             <label className="block text-left text-[11px] tracking-[0.2em] text-paper/50" htmlFor="unlock-code">
-              MMDD
+              专属密码
             </label>
             <input
               id="unlock-code"
               name="unlock-code"
               type="password"
-              inputMode="numeric"
               autoComplete="off"
               value={code}
+              disabled={busy}
               onChange={(event) => {
                 setCode(event.target.value);
                 setStatus("idle");
+                setError(null);
               }}
               placeholder="••••"
               className="mt-2 w-full border-b border-gold/40 bg-transparent py-3 text-center text-2xl tracking-[0.5em] text-paper outline-none placeholder:text-paper/25 focus-visible:border-gold"
@@ -80,28 +101,22 @@ export function UnlockScreen() {
             />
             {status === "error" ? (
               <p id="unlock-error" className="mt-3 text-xs text-accent-ours">
-                请输入至少 4 位专属日期（Phase 1 Mock，任意 4 位可进入）
+                {error}
               </p>
             ) : (
-              <p className="mt-3 text-xs text-paper/35">Phase 1 Mock · 尚未校验真实密码</p>
+              <p className="mt-3 text-xs text-paper/35">密码在 Studio → 设置 中配置</p>
             )}
             <button
               type="submit"
+              disabled={busy}
               className={cn(
                 buttonVariants({ variant: "secondary" }),
                 "mt-8 w-full border border-gold/30 bg-transparent text-paper hover:bg-paper/10",
               )}
             >
-              ENTER
+              {busy ? "验证中…" : "ENTER"}
             </button>
           </form>
-
-          <Link
-            href="/"
-            className="mt-8 inline-block text-xs tracking-wide text-paper/40 underline-offset-4 hover:text-paper/70 hover:underline"
-          >
-            跳过（开发预览）
-          </Link>
         </FadeIn>
       )}
     </section>

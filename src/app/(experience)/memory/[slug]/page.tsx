@@ -1,25 +1,31 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FadeIn } from "@/components/motion/fade-in";
+import { getPublishedMemoryBySlug } from "@/features/memories/published";
 import { MemoryLayoutRenderer } from "@/features/templates/registry";
-import { formatDisplayDate, getMemoryBySlug, mockMemories } from "@/config/mock-data";
 
 type MemoryPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+function formatDisplayDate(isoDate: string) {
+  const date = new Date(`${isoDate}T00:00:00`);
+  return {
+    year: String(date.getFullYear()),
+    short: `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`,
+  };
+}
+
 export default async function MemoryPage({ params }: MemoryPageProps) {
   const { slug } = await params;
-  const memory = getMemoryBySlug(slug);
+  const payload = await getPublishedMemoryBySlug(slug);
 
-  if (!memory) {
+  if (!payload) {
     notFound();
   }
 
+  const { memory, prev, next } = payload;
   const date = formatDisplayDate(memory.eventDate);
-  const index = mockMemories.findIndex((item) => item.slug === slug);
-  const prev = index > 0 ? mockMemories[index - 1] : null;
-  const next = index < mockMemories.length - 1 ? mockMemories[index + 1] : null;
 
   return (
     <article className="mx-auto w-full max-w-5xl px-6 py-12 md:py-16">
@@ -50,7 +56,10 @@ export default async function MemoryPage({ params }: MemoryPageProps) {
         </ul>
       ) : null}
 
-      <nav className="mt-14 flex flex-col gap-4 border-t border-line pt-8 sm:flex-row sm:justify-between" aria-label="相邻回忆">
+      <nav
+        className="mt-14 flex flex-col gap-4 border-t border-line pt-8 sm:flex-row sm:justify-between"
+        aria-label="相邻回忆"
+      >
         {prev ? (
           <Link href={`/memory/${prev.slug}`} className="text-sm text-muted-ours hover:text-ink">
             ← {prev.title}
@@ -59,7 +68,10 @@ export default async function MemoryPage({ params }: MemoryPageProps) {
           <span />
         )}
         {next ? (
-          <Link href={`/memory/${next.slug}`} className="text-sm text-muted-ours hover:text-ink sm:text-right">
+          <Link
+            href={`/memory/${next.slug}`}
+            className="text-sm text-muted-ours hover:text-ink sm:text-right"
+          >
             {next.title} →
           </Link>
         ) : null}

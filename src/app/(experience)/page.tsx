@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { FadeIn } from "@/components/motion/fade-in";
 import { buttonVariants } from "@/components/ui/button";
-import { mockStats } from "@/config/mock-data";
+import { getHomeStats } from "@/features/memories/published";
 import { cn } from "@/lib/utils";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const stats = await getHomeStats();
+
   return (
     <section className="relative flex min-h-[calc(100vh-3.5rem)] flex-1 flex-col overflow-hidden">
       <div
@@ -29,10 +31,14 @@ export default function HomePage() {
         </FadeIn>
 
         <FadeIn delay={0.12} className="mt-10 grid gap-4 sm:grid-cols-2">
-          <Stat label="我们认识后的第" value={`${mockStats.daysTogether}`} suffix="天" />
-          <Stat label="共同记录的" value={`${mockStats.memoryCount}`} suffix="个回忆" />
-          <Stat label="去过的" value={`${mockStats.placeCount}`} suffix="个地方" />
-          <Stat label="收藏的" value={`${mockStats.photoCount}`} suffix="张照片" />
+          <Stat
+            label="我们认识后的第"
+            value={stats.daysTogether == null ? "—" : `${stats.daysTogether}`}
+            suffix="天"
+          />
+          <Stat label="共同记录的" value={`${stats.memoryCount}`} suffix="个回忆" />
+          <Stat label="去过的" value={`${stats.placeCount}`} suffix="个地方" />
+          <Stat label="收藏的" value={`${stats.photoCount}`} suffix="张照片" />
         </FadeIn>
 
         <FadeIn delay={0.2} className="mt-10 flex flex-wrap gap-3">

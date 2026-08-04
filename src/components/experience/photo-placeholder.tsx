@@ -1,3 +1,4 @@
+import { PhotoLightbox } from "@/components/photo-viewer/lightbox";
 import { cn } from "@/lib/utils";
 import type { EventPhoto } from "@/types/memory";
 
@@ -9,6 +10,8 @@ type PhotoPlaceholderProps = {
   fill?: boolean;
   /** Optional real thumbnail URL (Phase 4+). */
   imageUrl?: string | null;
+  /** Open fullscreen original on click (default true when photoId present). */
+  enableLightbox?: boolean;
 };
 
 export function PhotoPlaceholder({
@@ -17,8 +20,12 @@ export function PhotoPlaceholder({
   showLabel = false,
   fill = false,
   imageUrl,
+  enableLightbox = true,
 }: PhotoPlaceholderProps) {
-  return (
+  const resolvedUrl = imageUrl ?? photo.thumbnailUrl;
+  const photoId = photo.photoId ?? photo.id;
+
+  const body = (
     <div
       role="img"
       aria-label={photo.alt}
@@ -30,15 +37,15 @@ export function PhotoPlaceholder({
         fill && "h-full w-full",
         className,
       )}
-      style={
-        imageUrl
-          ? undefined
-          : { backgroundImage: photo.gradient }
-      }
+      style={resolvedUrl ? undefined : { backgroundImage: photo.gradient }}
     >
-      {imageUrl ? (
+      {resolvedUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt={photo.alt} className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={resolvedUrl}
+          alt={photo.alt}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
       ) : null}
       <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
       {showLabel ? (
@@ -48,4 +55,14 @@ export function PhotoPlaceholder({
       ) : null}
     </div>
   );
+
+  if (enableLightbox && photoId && photoId.length > 20) {
+    return (
+      <PhotoLightbox photoId={photoId} alt={photo.alt} thumbnailUrl={resolvedUrl}>
+        {body}
+      </PhotoLightbox>
+    );
+  }
+
+  return body;
 }

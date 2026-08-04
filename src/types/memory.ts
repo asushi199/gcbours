@@ -36,6 +36,8 @@ export type EventPhoto = {
   gradient: string;
   alt: string;
   thumbnailUrl?: string | null;
+  /** DB photo id — enables fullscreen original proxy */
+  photoId?: string;
 };
 
 export type MemoryLayoutProps = {

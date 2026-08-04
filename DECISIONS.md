@@ -78,8 +78,20 @@ Consequences:
 Date: 2026-08-04
 Status: Accepted
 Context: Phase 5 需要可切换的日记生成能力，且无 API Key 时系统仍可用。
-Decision: 统一 `AIProvider.analyzeMemory`；默认 Mock；有 Key 时用 OpenAI-compatible Chat Completions（JSON + 一次 schema 修复）。生成结果写入 `diary_versions`（source=ai）并更新 draft 字段，不自动发布。分析图仅用缩略图再压缩，不送原图。
+Decision: 统一 `AIProvider.analyzeMemory`；默认 Mock；有 Key 时用 OpenAI-compatible Chat Completions（JSON + 一次 schema 修复）。生成结果写入 `diary_versions`（source=ai）并更新 draft 字段，不自动发布。分析图仅用缩略图再压缩，不送原图。对 Groq 关闭 `response_format` JSON 模式并设 `reasoning_effort=none`，避免 Qwen thinking 污染输出。
 Reason: 符合 SPEC 的事实约束与可替换 Provider；保护隐私与稳定性。
 Consequences:
 - 编辑器可展示 `questionsToConfirm` / `inferredFacts` / 版本恢复。
-- 真实多模态依赖模型是否支持 image_url；Mock 仅用文本与元数据。
+- 真实多模态依赖模型是否支持 image_url；默认 `AI_VISION=false`。
+
+## Decision 008
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 6 需要发布与对方私密访问，且不给 partner 开 Supabase 账号。
+Decision: Studio 设置解锁密码（`relationship_settings.access_hash`，scrypt）；`ours_partner_session` HMAC Cookie（`SESSION_SIGNING_SECRET`）；middleware 门禁体验路由；publish/unpublish + 可编辑 slug；前台只读 published；缩略图 Storage signed URL；原图经 `/api/signed-original` + GAS `getFile`。背景音乐延后。
+Reason: 贴合 SPEC 私密访问设计，密码可在 Studio 更换，原图不公开直链。
+Consequences:
+- 需执行 `20260804120000_access_hash.sql` 并配置 `SESSION_SIGNING_SECRET`。
+- 对方无 Cookie 时访问 `/` 等会跳转 `/unlock`。
+- 管理员登录态可进前台自测，但仍只看到 published 内容。

@@ -1,14 +1,36 @@
 import Link from "next/link";
 import { FadeIn } from "@/components/motion/fade-in";
+import { UnlockPasswordForm } from "@/components/studio/unlock-password-form";
 import { buttonVariants } from "@/components/ui/button";
 import { mockRelationship } from "@/config/mock-data";
 import { getDriveConnectionStatus, isDriveConfigured } from "@/lib/google-drive/gas-client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 export default async function StudioSettingsPage() {
   const driveStatus = await getDriveConnectionStatus();
   const supabaseReady = isSupabaseConfigured();
+
+  let passwordSet = false;
+  if (supabaseReady) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("relationship_settings")
+          .select("access_hash")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        passwordSet = Boolean(data?.access_hash);
+      }
+    } catch {
+      passwordSet = false;
+    }
+  }
 
   return (
     <section className="mx-auto w-full max-w-3xl px-6 py-12">
@@ -16,7 +38,7 @@ export default async function StudioSettingsPage() {
         <p className="text-xs tracking-[0.2em] text-gold uppercase">Settings</p>
         <h1 className="mt-2 font-serif text-3xl text-ink">设置</h1>
         <p className="mt-2 text-sm text-muted-ours">
-          关系资料仍为 Mock。Drive 通过 Google Apps Script 网关接入，无需在 Studio 授权。
+          在这里配置对方解锁密码。Drive 通过 Google Apps Script 网关接入。
         </p>
       </FadeIn>
 
@@ -34,6 +56,8 @@ export default async function StudioSettingsPage() {
         <Row label="原图存储" value="Google Drive via GAS" />
         <Row label="缩略图存储" value="Supabase 私有桶 memory-thumbnails" />
       </dl>
+
+      {supabaseReady ? <UnlockPasswordForm initiallySet={passwordSet} /> : null}
 
       <div className="mt-10 rounded-2xl border border-line bg-paper px-5 py-6">
         <h2 className="font-serif text-xl text-ink">Google Drive（GAS 网关）</h2>
@@ -67,7 +91,7 @@ export default async function StudioSettingsPage() {
         <p className="mt-4 text-xs leading-6 text-muted-ours">
           部署步骤见 <code className="rounded bg-background px-1">docs/phase-2-setup.md</code>
           ，脚本模板在 <code className="rounded bg-background px-1">gas/OursDriveGateway.gs</code>
-          。授权只需在 Google Apps Script 部署时完成一次。
+          。
         </p>
       </div>
 

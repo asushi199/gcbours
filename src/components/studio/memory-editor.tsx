@@ -41,6 +41,10 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
   const [inferredFacts, setInferredFacts] = useState<string[]>([]);
   const [aiProvider, setAiProvider] = useState<string | null>(null);
   const [versions, setVersions] = useState(initial.diaryVersions);
+  const [status, setStatus] = useState(initial.memory.status);
+  const [slug, setSlug] = useState(initial.memory.slug);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishBusy, setPublishBusy] = useState(false);
 
   const memory = useMemo(
     () => ({
@@ -246,6 +250,51 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
     window.location.reload();
   }
 
+  async function runPublish() {
+    setPublishBusy(true);
+    setError(null);
+    try {
+      await persist("发布前已保存", { throwOnError: true });
+      const response = await fetch(`/api/memories/${initial.memory.id}/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const json = (await response.json()) as { ok?: boolean; message?: string; slug?: string };
+      if (!response.ok || !json.ok) {
+        throw new Error(json.message ?? "Publish failed");
+      }
+      setStatus("published");
+      if (json.slug) setSlug(json.slug);
+      setPublishOpen(false);
+      setSavedAt(`已发布 · ${new Date().toLocaleTimeString("zh-CN")}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Publish failed");
+    } finally {
+      setPublishBusy(false);
+    }
+  }
+
+  async function runUnpublish() {
+    setPublishBusy(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/memories/${initial.memory.id}/unpublish`, {
+        method: "POST",
+      });
+      const json = (await response.json()) as { ok?: boolean; message?: string };
+      if (!response.ok || !json.ok) {
+        throw new Error(json.message ?? "Unpublish failed");
+      }
+      setStatus("draft");
+      setSavedAt(`已取消发布 · ${new Date().toLocaleTimeString("zh-CN")}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unpublish failed");
+    } finally {
+      setPublishBusy(false);
+    }
+  }
+
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-12">
       <FadeIn className="flex flex-wrap items-end justify-between gap-3">
@@ -254,6 +303,7 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
           <h1 className="mt-2 font-serif text-3xl text-ink">编辑回忆</h1>
           <p className="mt-1 text-xs text-muted-ours">
             {saving ? "保存中…" : savedAt}
+            {status === "published" ? " · 已发布" : " · 草稿"}
           </p>
           {error ? <p className="mt-1 text-xs text-accent-ours">{error}</p> : null}
         </div>
@@ -265,11 +315,73 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
           >
             保存草稿
           </button>
-          <button type="button" disabled className={cn(buttonVariants(), "opacity-60")}>
-            发布（Phase 6）
-          </button>
+          {status === "published" ? (
+            <>
+              <Link
+                href={`/memory/${slug}`}
+                className={cn(buttonVariants({ variant: "outline" }))}
+                target="_blank"
+              >
+                查看已发布页
+              </Link>
+              <button
+                type="button"
+                disabled={publishBusy}
+                onClick={() => void runUnpublish()}
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                {publishBusy ? "处理中…" : "取消发布"}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              disabled={publishBusy}
+              onClick={() => setPublishOpen(true)}
+              className={cn(buttonVariants())}
+            >
+              发布
+            </button>
+          )}
         </div>
       </FadeIn>
+
+      {publishOpen ? (
+        <div className="mt-4 rounded-xl border border-line bg-paper p-4">
+          <p className="text-sm font-medium text-ink">确认发布</p>
+          <p className="mt-1 text-xs text-muted-ours">
+            {title} · {eventDate}
+            {placeName ? ` · ${placeName}` : ""}
+          </p>
+          <label className="mt-3 block text-xs text-muted-ours" htmlFor="publish-slug">
+            链接 slug（可改）
+          </label>
+          <input
+            id="publish-slug"
+            value={slug}
+            onChange={(event) => setSlug(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+            className="mt-1 w-full max-w-md rounded-lg border border-line bg-background px-3 py-2 text-sm"
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={publishBusy}
+              onClick={() => void runPublish()}
+              className={cn(buttonVariants({ size: "sm" }))}
+            >
+              {publishBusy ? "发布中…" : "确认发布"}
+            </button>
+            <button
+              type="button"
+              disabled={publishBusy}
+              onClick={() => setPublishOpen(false)}
+              className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 flex gap-2 overflow-x-auto lg:hidden" role="tablist" aria-label="编辑分区">
         {(
