@@ -28,7 +28,7 @@ export default async function MemoryPage({ params }: MemoryPageProps) {
   const date = formatDisplayDate(memory.eventDate);
 
   return (
-    <article className="mx-auto w-full max-w-5xl px-6 py-12 md:py-16">
+    <article className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 md:py-16">
       <FadeIn>
         <p className="text-xs tracking-[0.2em] text-muted-ours">
           {date.year}.{date.short}

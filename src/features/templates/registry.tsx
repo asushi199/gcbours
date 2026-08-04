@@ -1,14 +1,15 @@
+import { MemoryPhotoGalleryProvider } from "@/components/photo-viewer/gallery-context";
+import type {
+  MemoryLayoutProps,
+  MemoryTemplateDefinition,
+} from "@/types/memory";
+import type { ComponentType } from "react";
 import { EditorialHeroLayout } from "@/components/memory-layouts/editorial-hero";
 import { FilmStripLayout } from "@/components/memory-layouts/film-strip";
 import { FullBleedQuoteLayout } from "@/components/memory-layouts/full-bleed-quote";
 import { PolaroidStackLayout } from "@/components/memory-layouts/polaroid-stack";
 import { SplitStoryLayout } from "@/components/memory-layouts/split-story";
 import { ThreePhotoJournalLayout } from "@/components/memory-layouts/three-photo-journal";
-import type {
-  MemoryLayoutProps,
-  MemoryTemplateDefinition,
-} from "@/types/memory";
-import type { ComponentType } from "react";
 
 export const memoryTemplates: Array<
   MemoryTemplateDefinition & {
@@ -84,7 +85,11 @@ export function getTemplate(id: string) {
 export function MemoryLayoutRenderer(props: MemoryLayoutProps) {
   const template = getTemplate(props.memory.templateId);
   const Component = template.component;
-  return <Component {...props} />;
+  return (
+    <MemoryPhotoGalleryProvider photos={props.photos}>
+      <Component {...props} />
+    </MemoryPhotoGalleryProvider>
+  );
 }
 
 export function scoreTemplate(

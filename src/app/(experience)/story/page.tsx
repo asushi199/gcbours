@@ -1,29 +1,36 @@
 import Link from "next/link";
 import { FadeIn } from "@/components/motion/fade-in";
+import { EmptyState } from "@/components/ui/status-blocks";
 import { getStoryChapters } from "@/features/memories/published";
 
 export default async function StoryPage() {
   const chapters = await getStoryChapters();
 
   return (
-    <section className="mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
+    <section className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 md:py-16">
       <FadeIn>
         <p className="text-xs tracking-[0.25em] text-gold uppercase">Chapters</p>
-        <h1 className="mt-3 font-serif text-4xl text-ink">我们的故事</h1>
+        <h1 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">我们的故事</h1>
         <p className="mt-3 max-w-md text-sm leading-7 text-muted-ours">
           按章节慢慢读。每一章都是一种相处的样子。
         </p>
       </FadeIn>
 
       {chapters.length === 0 ? (
-        <p className="mt-12 text-sm text-muted-ours">还没有已发布的回忆。去 Studio 发布第一篇吧。</p>
+        <EmptyState
+          className="mt-12"
+          title="还没有成章的回忆"
+          description="发布第一篇回忆后，故事会按章节慢慢展开。"
+          actionHref="/timeline"
+          actionLabel="先去时间线看看 →"
+        />
       ) : (
-        <ol className="mt-12 space-y-8">
+        <ol className="mt-10 space-y-8 sm:mt-12">
           {chapters.map((chapter, index) => (
             <FadeIn key={chapter.id} delay={0.05 * index}>
               <li className="group grid gap-4 border-t border-line pt-6 sm:grid-cols-[140px_1fr] sm:items-center">
                 <div
-                  className="aspect-[4/3] overflow-hidden rounded-xl bg-cover bg-center sm:aspect-square"
+                  className="aspect-[4/3] overflow-hidden rounded-xl bg-cover bg-center shadow-[0_10px_30px_rgba(32,28,26,0.06)] sm:aspect-square"
                   style={
                     chapter.coverUrl
                       ? { backgroundImage: `url(${chapter.coverUrl})` }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PhotoPlaceholder } from "@/components/experience/photo-placeholder";
 import { FadeIn } from "@/components/motion/fade-in";
+import { EmptyState } from "@/components/ui/status-blocks";
 import type { PublishedMemory } from "@/features/memories/published";
 import { cn } from "@/lib/utils";
 
@@ -31,8 +32,9 @@ function matchesFilter(memory: PublishedMemory, filter: string) {
   if (filter === "旅行" && chapter === "journeys") return true;
   if (filter === "日常" && chapter === "ordinary_days") return true;
   if (filter === "庆祝" && chapter === "celebrations") return true;
-  if (filter === "食物" && (chapter === "food_and_places" || memory.tags?.includes("食物")))
+  if (filter === "食物" && (chapter === "food_and_places" || memory.tags?.includes("食物"))) {
     return true;
+  }
   if (filter === "地点" && Boolean(memory.placeName)) return true;
   return false;
 }
@@ -50,10 +52,10 @@ export function TimelineView({ memories }: TimelineViewProps) {
   );
 
   return (
-    <section className="mx-auto w-full max-w-4xl px-6 py-12 md:py-16">
+    <section className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 md:py-16">
       <FadeIn>
         <p className="text-xs tracking-[0.25em] text-gold uppercase">Timeline</p>
-        <h1 className="mt-3 font-serif text-4xl text-ink">时间线</h1>
+        <h1 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">时间线</h1>
         <p className="mt-3 text-sm text-muted-ours">按日期慢慢往回翻。</p>
       </FadeIn>
 
@@ -77,50 +79,60 @@ export function TimelineView({ memories }: TimelineViewProps) {
         ))}
       </div>
 
-      <ul className="mt-10 space-y-10">
-        {filtered.map((memory, index) => {
-          const date = formatDisplayDate(memory.eventDate);
-          const cover = memory.photos[0];
+      {memories.length === 0 ? (
+        <EmptyState
+          className="mt-12"
+          title="时间线还是空的"
+          description="在 Studio 发布第一篇回忆后，就会出现在这里。"
+          actionHref="/studio"
+          actionLabel="前往 Studio →"
+        />
+      ) : (
+        <ul className="mt-10 space-y-10">
+          {filtered.map((memory, index) => {
+            const date = formatDisplayDate(memory.eventDate);
+            const cover = memory.photos[0];
 
-          return (
-            <FadeIn key={memory.id} delay={0.04 * index}>
-              <li className="grid gap-5 border-t border-line pt-8 md:grid-cols-[88px_1fr]">
-                <div className="md:sticky md:top-20">
-                  <p className="font-serif text-3xl text-ink">{date.short}</p>
-                  <p className="text-xs text-muted-ours">{date.year}</p>
-                </div>
-                <Link
-                  href={`/memory/${memory.slug}`}
-                  className="group grid gap-4 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[1.2fr_1fr] sm:items-center"
-                >
-                  {cover ? (
-                    <PhotoPlaceholder
-                      photo={cover}
-                      imageUrl={cover.thumbnailUrl}
-                      enableLightbox={false}
-                      className="rounded-xl transition-transform duration-200 group-hover:scale-[1.01]"
-                    />
-                  ) : null}
-                  <div>
-                    <p className="text-xs text-muted-ours">{memory.placeName ?? "地点未记录"}</p>
-                    <h2 className="mt-1 font-serif text-2xl text-ink group-hover:text-accent-ours md:text-3xl">
-                      {memory.title}
-                    </h2>
-                    <p className="mt-2 text-sm leading-7 text-muted-ours">{memory.oneLine}</p>
+            return (
+              <FadeIn key={memory.id} delay={0.04 * index}>
+                <li className="grid gap-5 border-t border-line pt-8 md:grid-cols-[88px_1fr]">
+                  <div className="md:sticky md:top-20">
+                    <p className="font-serif text-3xl text-ink">{date.short}</p>
+                    <p className="text-xs text-muted-ours">{date.year}</p>
                   </div>
-                </Link>
-              </li>
-            </FadeIn>
-          );
-        })}
-      </ul>
+                  <Link
+                    href={`/memory/${memory.slug}`}
+                    className="group grid gap-4 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[1.2fr_1fr] sm:items-center"
+                  >
+                    {cover ? (
+                      <PhotoPlaceholder
+                        photo={cover}
+                        imageUrl={cover.thumbnailUrl}
+                        enableLightbox={false}
+                        className="rounded-xl transition-transform duration-200 group-hover:scale-[1.01]"
+                      />
+                    ) : null}
+                    <div>
+                      <p className="text-xs text-muted-ours">{memory.placeName ?? "地点未记录"}</p>
+                      <h2 className="mt-1 font-serif text-2xl text-ink group-hover:text-accent-ours md:text-3xl">
+                        {memory.title}
+                      </h2>
+                      <p className="mt-2 text-sm leading-7 text-muted-ours">{memory.oneLine}</p>
+                    </div>
+                  </Link>
+                </li>
+              </FadeIn>
+            );
+          })}
+        </ul>
+      )}
 
-      {filtered.length === 0 ? (
-        <p className="mt-12 text-sm text-muted-ours">
-          {memories.length === 0
-            ? "还没有已发布的回忆。"
-            : "这个分类下暂时没有回忆。"}
-        </p>
+      {memories.length > 0 && filtered.length === 0 ? (
+        <EmptyState
+          className="mt-12"
+          title="这个分类下暂时没有回忆"
+          description="换一个筛选，或稍后再来。"
+        />
       ) : null}
     </section>
   );

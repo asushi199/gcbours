@@ -1,44 +1,33 @@
 # Current Phase
 
-Phase 6 — 发布与私密体验（实现中 / 核心已落地）
+Phase 7 — 视觉完善（已落地）
 
 ## Todo
 
-- [ ] 在 Supabase 执行 migration：`20260804120000_access_hash.sql`
-- [ ] Studio 设置解锁密码 → 发布一篇 → 无痕窗口解锁验收
-- [ ] 背景音乐（已明确延后）
+- [ ] （可选）背景音乐仍延后
+- [ ] 下一阶段：Phase 8 测试与部署（需用户确认）
 
 ## In Progress
 
-- [x] 设计文档 + 实现计划
-- [x] 解锁密码 / Cookie / middleware
-- [x] 发布 / 取消发布
-- [x] 前台 published 数据
-- [x] 签名缩略图 + 原图代理 + lightbox
+- [ ] （无）
 
 ## Completed
 
-### Phase 6（代码）
-- [x] `access_hash` migration
-- [x] password-hash + partner-session
-- [x] `/api/unlock` `/api/unlock/logout` `/api/settings/unlock-password`
-- [x] 体验路由门禁
-- [x] publish / unpublish API + 编辑器 UI
-- [x] home / story / timeline / memory 接真数据
-- [x] `/api/signed-original` + lightbox
+### Phase 7
+- [x] 克制纸质感动效：FadeIn / PhotoReveal / PageTransition + reduced motion
+- [x] 空 / 加载 / 错误状态组件，接入故事与时间线
+- [x] 全屏灯箱：加载/失败重试、左右切换、键盘与滑动
+- [x] 字体：正文 Manrope + Noto Sans SC；标题 Cormorant
+- [x] 手机间距与导航触控优化
 
-### Phase 5
-- [x] AI 日记生成（含 Groq 兼容修复）
+### Phase 6
+- [x] 发布 / 解锁 / 已发布前台 / 原图代理 / 章节编辑
 
 ## Validation
 
-- [x] typecheck / unit tests（27）
-- [ ] lint + production build（提交前再跑）
-- [ ] 手工解锁/发布验收
+- [x] typecheck / tests（30）/ lint / production build
 
 ## Notes
 
 - 仓库：https://github.com/asushi199/gcbours
-- 需配置 `SESSION_SIGNING_SECRET`（本地已生成，勿提交 `.env.local`）
-- 设计：`docs/superpowers/specs/2026-08-04-phase-6-publish-unlock-design.md`
-- 计划：`docs/superpowers/plans/2026-08-04-phase-6-publish-unlock.md`
+- 设计：纸质档案气质，不做夸张电影转场

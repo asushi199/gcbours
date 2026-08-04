@@ -95,3 +95,14 @@ Consequences:
 - 需执行 `20260804120000_access_hash.sql` 并配置 `SESSION_SIGNING_SECRET`。
 - 对方无 Cookie 时访问 `/` 等会跳转 `/unlock`。
 - 管理员登录态可进前台自测，但仍只看到 published 内容。
+
+## Decision 009
+
+Date: 2026-08-04
+Status: Accepted
+Context: Phase 7 视觉完善；用户选择完整清单 + 克制纸质感动效 + 全屏可左右切换。
+Decision: 在现有组件上增强（方案 1）：FadeIn/PhotoReveal/PageTransition；统一 Empty/Loading/Error；灯箱支持同篇切换；字体栈明确中文兜底；不重做模板体系；音乐继续延后。
+Reason: 贴合私人档案气质，改动可控，避免视觉回归。
+Consequences:
+- 回忆页照片可全屏左右浏览原图。
+- `prefers-reduced-motion` 时退化为静态。

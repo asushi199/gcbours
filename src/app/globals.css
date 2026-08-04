@@ -143,6 +143,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans), var(--font-noto), "Noto Sans SC", system-ui, sans-serif;
+  }
+  .font-serif {
+    font-family: var(--font-serif), "Noto Serif SC", "Songti SC", serif;
   }
   html {
     @apply font-sans;
