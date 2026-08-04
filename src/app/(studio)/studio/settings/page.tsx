@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { FadeIn } from "@/components/motion/fade-in";
+import { ChapterLabelsForm } from "@/components/studio/chapter-labels-form";
 import { UnlockPasswordForm } from "@/components/studio/unlock-password-form";
 import { buttonVariants } from "@/components/ui/button";
+import { resolveChapterLabels, type ChapterId } from "@/config/chapters";
 import { mockRelationship } from "@/config/mock-data";
 import { getDriveConnectionStatus, isDriveConfigured } from "@/lib/google-drive/gas-client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -13,6 +15,7 @@ export default async function StudioSettingsPage() {
   const supabaseReady = isSupabaseConfigured();
 
   let passwordSet = false;
+  let chapterLabels = resolveChapterLabels(null);
   if (supabaseReady) {
     try {
       const supabase = await createClient();
@@ -22,10 +25,13 @@ export default async function StudioSettingsPage() {
       if (user) {
         const { data } = await supabase
           .from("relationship_settings")
-          .select("access_hash")
+          .select("access_hash, chapter_labels")
           .eq("owner_id", user.id)
           .maybeSingle();
         passwordSet = Boolean(data?.access_hash);
+        chapterLabels = resolveChapterLabels(
+          (data?.chapter_labels as Partial<Record<ChapterId, string>> | null) ?? null,
+        );
       }
     } catch {
       passwordSet = false;
@@ -58,6 +64,7 @@ export default async function StudioSettingsPage() {
       </dl>
 
       {supabaseReady ? <UnlockPasswordForm initiallySet={passwordSet} /> : null}
+      {supabaseReady ? <ChapterLabelsForm initialLabels={chapterLabels} /> : null}
 
       <div className="mt-10 rounded-2xl border border-line bg-paper px-5 py-6">
         <h2 className="font-serif text-xl text-ink">Google Drive（GAS 网关）</h2>

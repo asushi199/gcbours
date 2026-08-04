@@ -1,4 +1,9 @@
 import { appConfig } from "@/config/app";
+import {
+  CHAPTER_IDS,
+  type ChapterId,
+  resolveChapterLabels,
+} from "@/config/chapters";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { EventPhoto, MemoryEvent } from "@/types/memory";
@@ -191,23 +196,28 @@ export type StoryChapter = {
   coverGradient: string;
 };
 
-const CHAPTER_LABELS: Record<string, string> = {
-  beginning: "我们的开始",
-  ordinary_days: "普通日子",
-  journeys: "一起出发",
-  celebrations: "值得庆祝的时刻",
-  food_and_places: "吃过的东西和去过的地方",
-  growing_together: "一起慢慢长大",
-  future: "写给未来",
-};
-
 export async function getStoryChapters(): Promise<StoryChapter[]> {
   const memories = await getPublishedMemories();
-  const order = Object.keys(CHAPTER_LABELS);
+  let customLabels: Partial<Record<ChapterId, string>> | null = null;
+  if (isSupabaseConfigured()) {
+    const supabase = createServiceClient();
+    const { data: settings } = await supabase
+      .from("relationship_settings")
+      .select("chapter_labels")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    customLabels = (settings?.chapter_labels as Partial<Record<ChapterId, string>> | null) ?? null;
+  }
+  const labels = resolveChapterLabels(customLabels);
+  const order = [...CHAPTER_IDS];
   const groups = new Map<string, PublishedMemory[]>();
 
   for (const memory of memories) {
-    const key = memory.chapter && CHAPTER_LABELS[memory.chapter] ? memory.chapter : "ordinary_days";
+    const key =
+      memory.chapter && isChapterKey(memory.chapter, labels)
+        ? memory.chapter
+        : "ordinary_days";
     const list = groups.get(key) ?? [];
     list.push(memory);
     groups.set(key, list);
@@ -221,7 +231,7 @@ export async function getStoryChapters(): Promise<StoryChapter[]> {
       const cover = list[0]?.photos[0];
       return {
         id: key,
-        title: CHAPTER_LABELS[key] ?? key,
+        title: labels[key as ChapterId] ?? key,
         count: list.length,
         oneLine: list[0]?.oneLine || list[0]?.title || "",
         dateRange:
@@ -234,4 +244,8 @@ export async function getStoryChapters(): Promise<StoryChapter[]> {
         coverGradient: cover?.gradient ?? gradientForIndex(index),
       };
     });
+}
+
+function isChapterKey(value: string, labels: Record<string, string>) {
+  return value in labels;
 }

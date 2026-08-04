@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CHAPTER_IDS } from "@/config/chapters";
 import { createClient } from "@/lib/supabase/server";
 
 export const SaveMemorySchema = z.object({
@@ -9,6 +10,7 @@ export const SaveMemorySchema = z.object({
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   placeName: z.string().max(200).nullable(),
   templateId: z.string().min(1).max(80),
+  chapter: z.enum(CHAPTER_IDS).nullable().optional(),
   photoOrder: z
     .array(
       z.object({
@@ -47,6 +49,7 @@ export async function saveMemoryEvent(input: {
       event_date: input.payload.eventDate,
       place_name: input.payload.placeName,
       template_id: input.payload.templateId,
+      ...(input.payload.chapter !== undefined ? { chapter: input.payload.chapter } : {}),
       cover_photo_id: coverPhotoId,
       updated_at: new Date().toISOString(),
     })

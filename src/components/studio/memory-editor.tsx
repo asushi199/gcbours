@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PhotoPlaceholder } from "@/components/experience/photo-placeholder";
 import { FadeIn } from "@/components/motion/fade-in";
 import { buttonVariants } from "@/components/ui/button";
+import { CHAPTER_IDS, DEFAULT_CHAPTER_LABELS, type ChapterId } from "@/config/chapters";
 import type { EditorMemoryPayload, EditorPhoto } from "@/features/memories/get-editor-memory";
 import { memoryTemplates, MemoryLayoutRenderer } from "@/features/templates/registry";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
   const [eventDate, setEventDate] = useState(initial.memory.eventDate);
   const [placeName, setPlaceName] = useState(initial.memory.placeName ?? "");
   const [templateId, setTemplateId] = useState(initial.memory.templateId);
+  const [chapter, setChapter] = useState(initial.memory.chapter ?? "ordinary_days");
   const [photos, setPhotos] = useState<EditorPhoto[]>(initial.photos);
   const [siblings] = useState(initial.siblingDrafts);
   const [mergeSourceId, setMergeSourceId] = useState(initial.siblingDrafts[0]?.id ?? "");
@@ -56,8 +58,9 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
       templateId,
       eventDate,
       placeName: placeName || null,
+      chapter,
     }),
-    [diaryBody, eventDate, initial.memory, oneLine, placeName, templateId, title],
+    [chapter, diaryBody, eventDate, initial.memory, oneLine, placeName, templateId, title],
   );
 
   async function persist(message = "已自动保存", options?: { throwOnError?: boolean }) {
@@ -75,6 +78,7 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
           eventDate,
           placeName: placeName || null,
           templateId,
+          chapter,
           photoOrder: photos.map((photo, index) => ({
             photoId: photo.photoId,
             role: index === 0 ? "cover" : photo.role,
@@ -106,7 +110,7 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
     }, 900);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, oneLine, diaryBody, userNote, eventDate, placeName, templateId, photos]);
+  }, [title, oneLine, diaryBody, userNote, eventDate, placeName, templateId, chapter, photos]);
 
   function movePhoto(index: number, direction: -1 | 1) {
     const target = index + direction;
@@ -208,6 +212,7 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
           oneLine: string;
           diaryBody: string;
           templateSuggestion: string;
+          chapterSuggestion?: string;
           placeSuggestion: string | null;
           questionsToConfirm: string[];
           inferredFacts: string[];
@@ -221,6 +226,12 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
       setOneLine(json.analysis.oneLine);
       setDiaryBody(json.analysis.diaryBody);
       setTemplateId(json.analysis.templateSuggestion);
+      if (
+        json.analysis.chapterSuggestion &&
+        (CHAPTER_IDS as readonly string[]).includes(json.analysis.chapterSuggestion)
+      ) {
+        setChapter(json.analysis.chapterSuggestion as ChapterId);
+      }
       if (json.analysis.placeSuggestion) {
         setPlaceName(json.analysis.placeSuggestion);
       }
@@ -571,6 +582,25 @@ export function MemoryEditor({ initial }: MemoryEditorProps) {
               onChange={(event) => setPlaceName(event.target.value)}
               className="mt-1 w-full rounded-lg border border-line bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
+
+            <label className="mt-4 block text-xs text-muted-ours" htmlFor="chapter">
+              故事章节
+            </label>
+            <select
+              id="chapter"
+              value={chapter}
+              onChange={(event) => setChapter(event.target.value as ChapterId)}
+              className="mt-1 w-full rounded-lg border border-line bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {CHAPTER_IDS.map((id) => (
+                <option key={id} value={id}>
+                  {DEFAULT_CHAPTER_LABELS[id]}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-muted-ours">
+              显示名称可在 Studio → 设置 里自定义
+            </p>
 
             <label className="mt-4 block text-xs text-muted-ours" htmlFor="one-line">
               一句话
